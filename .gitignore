@@ -452,3 +452,5 @@ AC_Control_Project/Debug/
 /Simulation/*.workspace
 
 *.workspace
+EventRecorderStub.scvd
+*.uvgui.*
