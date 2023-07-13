@@ -62,7 +62,8 @@
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
 #define configUSE_APPLICATION_TASK_TAG 1
 #define configUSE_EDF_SCHEDULER 1
-#define configUSE_TIME_SLICING 1
+#define configUSE_TIME_SLICING 0
+
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0

@@ -79,14 +79,20 @@
 #define BUTTON_2_MONITOR_TASK_DELAY 50
 #define PERIODIC_TASK_DELAY         100
 #define UART_RECEIVER_TASK_DELAY    20
+#define LOAD_1_SIMULATION_DELAY     10
+#define LOAD_2_SIMULATION_DELAY     100
 #define TICKS_TO_WAIT               10
 #define USR_STRING_LEN              15 
+#define LOAD_1                      (37313)
+#define LOAD_2                      (89552)
 
 /* Button 1 task handler */
 TaskHandle_t Button_1_Monitor_TASK_TaskHandler  = NULL;
 TaskHandle_t Button_2_Monitor_TASK_TaskHandler  = NULL;
 TaskHandle_t Uart_Receiver_TaskHandler          = NULL;
 TaskHandle_t Periodic_Transmitter_TaskHandler   = NULL;
+TaskHandle_t Load_1_Simulation_TaskHandler      = NULL;
+TaskHandle_t Load_2_Simulation_TaskHandler      = NULL;
 
 /* Queue handler */
 QueueHandle_t xQueue = NULL;
@@ -197,6 +203,36 @@ void Uart_Receiver_Task (void *pvParameters) {
   }
 }
 
+void Load_1_Simulation( void *pvParameters ) {
+  uint32_t count;
+  TickType_t xLastWakeTime;
+  xLastWakeTime = xTaskGetTickCount();
+	
+	vTaskSetApplicationTaskTag(NULL, (void *) PIN7);
+  
+  for( ;; ) {	
+    for ( count = 0; count < LOAD_1; count++ ) {
+      /* for loop to make the excutions time 5ms*/
+    }
+    vTaskDelayUntil(&xLastWakeTime, LOAD_1_SIMULATION_DELAY);
+  } 
+}
+
+void Load_2_Simulation( void * pvParameters ) {
+	uint32_t count;
+//  TickType_t x = pdMS_TO_TICKS(12);
+  TickType_t xLastWakeTime;
+  xLastWakeTime = xTaskGetTickCount();
+	
+	vTaskSetApplicationTaskTag(NULL,(void *) PIN8);
+    for( ;; ) {
+      for ( count = 0; count < LOAD_2; count++) {
+        /* for loop to make the excutions time 12ms*/
+      }
+      vTaskDelayUntil(&xLastWakeTime, LOAD_2_SIMULATION_DELAY);
+    } 
+}
+
 /* ---------------------------- Task implementation ends here. ---------------------------- */
 
 void vApplicationTickHook(void) {
@@ -257,9 +293,29 @@ int main( void )
 	configMINIMAL_STACK_SIZE,
 	NULL,
 	1,
-	&Uart_Receiver_TaskHandler);  
+	&Uart_Receiver_TaskHandler);
+  
+  /* Create the load simulation task (Load 1 simulation) */
+  xTaskCreate(
+	Load_1_Simulation,
+	"Load 1 simulation",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Load_1_Simulation_TaskHandler);
 
-	/* Now all the tasks have been started - start the scheduler.
+  /* Create the load simulation task (Load 2 simulation) */
+  xTaskCreate(
+	Load_2_Simulation,
+	"Load 2 simulation",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Load_2_Simulation_TaskHandler);  
+
+
+
+/* Now all the tasks have been started - start the scheduler.
 
 	NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
 	The processor MUST be in supervisor mode when vTaskStartScheduler is 
