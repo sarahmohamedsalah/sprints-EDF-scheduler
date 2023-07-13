@@ -196,6 +196,8 @@ void Uart_Receiver_Task (void *pvParameters) {
   }
 }
 
+/* ---------------------------- Task implementation ends here. ---------------------------- */
+
 /*
  * Application entry point:
  * Starts all the other tasks, then starts the scheduler. 
@@ -204,10 +206,51 @@ int main( void )
 {
 	/* Setup the hardware for use with the Keil demo board. */
 	prvSetupHardware();
-
+  
+  /* Initialize UART */
+  xSerialPortInitMinimal(mainCOM_TEST_BAUD_RATE);
+  
+  /* Create a queue capable of containing 10 15 bits values. */
+  xQueue = xQueueCreate( 10, 15 * sizeof( uint8_t ) );
 	
     /* Create Tasks here */
 
+
+  /* Create Task 1 (Button 1 Monitor) */
+  xTaskCreate(
+  Button_1_Monitor_Task,
+	"Button 1 monitor task",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Button_1_Monitor_TASK_TaskHandler);
+  
+  /* Create Task 2 (Button 2 Monitor) */
+  xTaskCreate(
+	Button_2_Monitor_Task,
+	"Button 2 monitor task",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Button_2_Monitor_TASK_TaskHandler);
+
+  /* Create the periodic task */
+  xTaskCreate(
+	Periodic_Transmitter_Task,
+	"Peridic task",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Periodic_Transmitter_TaskHandler);
+
+  /* Create the consumer task (UART recieve) */
+  xTaskCreate(
+	Uart_Receiver_Task,
+	"Consumer task",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Uart_Receiver_TaskHandler);  
 
 	/* Now all the tasks have been started - start the scheduler.
 
