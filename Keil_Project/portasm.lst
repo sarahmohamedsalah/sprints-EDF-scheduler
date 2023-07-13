@@ -565,9 +565,10 @@ ARM Macro Assembler    Page 9
               FFFFF030 
 Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\b
 in\portasm.d -o.\bin\portasm.o -I..\FreeRTOS\Source\portable\RVDS\ARM7_LPC21xx 
--IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMSIS\Include -IC:\Keil_v5\ARM\INC\P
-hilips --predefine="__EVAL SETA 1" --predefine="__UVISION_VERSION SETA 529" --l
-ist=.\portasm.lst ..\FreeRTOS\Source\portable\RVDS\ARM7_LPC21xx\portASM.s
+-IC:\Users\Sarah\Downloads\keil5\ARM\RV31\INC -IC:\Users\Sarah\Downloads\keil5\
+ARM\CMSIS\Include -IC:\Users\Sarah\Downloads\keil5\ARM\INC\Philips --predefine=
+"__EVAL SETA 1" --predefine="__UVISION_VERSION SETA 529" --list=.\portasm.lst .
+.\FreeRTOS\Source\portable\RVDS\ARM7_LPC21xx\portASM.s
 
 
 

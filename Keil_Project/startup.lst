@@ -645,9 +645,16 @@ ze + USR_Stack_Size)
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\b
 in\startup.d -o.\bin\startup.o -I..\FreeRTOS\Source\portable\RVDS\ARM7_LPC21xx 
--IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMSIS\Include -IC:\Keil_v5\ARM\INC\P
-hilips --predefine="__EVAL SETA 1" --predefine="__UVISION_VERSION SETA 529" --l
-ist=.\startup.lst Startup.s
+-IC:\Users\Sarah\Downloads\keil5\ARM\RV31\INC -IC:\Users\Sarah\Downloads\keil5\
+ARM\CMSIS\Include -IC:\Users\Sarah\Downloads\keil5\ARM\INC\Philips --predefine=
+"__EVAL SETA 1" --predefine="__UVISION_VERSION SETA 529" --list=.\startup.lst S
+
+
+
+ARM Macro Assembler    Page 11 
+
+
+tartup.s
 
 
 

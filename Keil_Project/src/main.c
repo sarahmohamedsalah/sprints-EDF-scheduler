@@ -59,8 +59,10 @@
 /* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 #include "lpc21xx.h"
-
+#include "semphr.h"
+#include "event_groups.h"
 /* Peripheral includes. */
 #include "serial.h"
 #include "GPIO.h"
@@ -73,7 +75,100 @@
 
 /* Constants for the ComTest demo application tasks. */
 #define mainCOM_TEST_BAUD_RATE	( ( unsigned long ) 115200 )
+/*****************************************Defintions used in the main **************************/
 
+#define NULL_PTR 	(void *) 0
+#define LOGIC_HIGH			1
+#define LOGIC_LOW			0
+/************** Periodicity of the Tasks************************/
+
+
+#define UART_TASK_PERIOD				20
+#define LOAD1_TASK_PERIOD				10
+#define LOAD2_TASK_PERIOD				100
+
+/********************************************************************
+**********************Task Handlers***********************************
+************************************************************************/
+TaskHandle_t Uart_ReceiverHandler = NULL;
+
+TaskHandle_t Load1Handler = NULL;
+TaskHandle_t Load2Handler = NULL;
+
+/******************************Queue Handler **************************/
+QueueHandle_t xMessageBuffer = NULL;
+
+void Uart_Receiver( void * pvParameters)
+{
+	char* Received_message = NULL_PTR;
+	TickType_t xLastWakeTime;
+	 xLastWakeTime = xTaskGetTickCount();
+
+	vTaskSetApplicationTaskTag(NULL,(void *) 5); /*giving Tag to the task to use Trace Hooks */
+
+	for(;;)
+	{
+		if( xQueueReceive( xMessageBuffer, &( Received_message ), ( TickType_t ) 0 ) == pdPASS )
+		{ 
+			vSerialPutString((const signed char *)Received_message,20); /* receiving the message to the queue */
+		}
+		vTaskDelayUntil(&xLastWakeTime,UART_TASK_PERIOD);
+	}
+}
+
+
+
+
+
+
+void Load_1_Simulation( void * pvParameters )
+{
+	int i;
+   TickType_t xLastWakeTime;
+	 xLastWakeTime = xTaskGetTickCount();
+	
+	vTaskSetApplicationTaskTag(NULL,(void *) 6);
+    for( ;; )
+    {
+        /* Task code goes here. */
+			
+			for (i = 0; i < 37313; i++)
+			{
+				/* for loop to make the excutions time 5ms*/
+			}
+			
+			vTaskDelayUntil(&xLastWakeTime,LOAD1_TASK_PERIOD);
+    } 
+
+
+}
+
+
+void Load_2_Simulation( void * pvParameters )
+{
+	int i;
+   TickType_t xLastWakeTime;
+	 xLastWakeTime = xTaskGetTickCount();
+	
+	vTaskSetApplicationTaskTag(NULL,(void *) 7);
+    for( ;; )
+    {
+        /* Task code goes here. */
+			
+			
+			for ( i = 0; i < 89552; i++)
+			{
+				/* for loop to make the excutions time 12ms*/
+			}
+			
+				
+			
+			
+			vTaskDelayUntil(&xLastWakeTime,LOAD2_TASK_PERIOD);
+    } 
+
+
+}
 
 /*
  * Configure the processor for use with the Keil demo board.  This is very
@@ -95,7 +190,35 @@ int main( void )
 
 	
     /* Create Tasks here */
-
+xTaskPeriodicCreate(
+                    Uart_Receiver,       /* Function that implements the task. */
+                    "Load_1_Simulation",          /* Text name for the task. */
+                    100,      /* Stack size in words, not bytes. */
+                    ( void * ) 0,    /* Parameter passed into the task. */
+                    1 ,/* Priority at which the task is created. */
+                    &Uart_ReceiverHandler, /* Used to pass out the created task's handle. */
+										UART_TASK_PERIOD);     
+	
+	 xTaskPeriodicCreate(
+                    Load_1_Simulation,       /* Function that implements the task. */
+                    "Load_1_Simulation",          /* Text name for the task. */
+                    100,      /* Stack size in words, not bytes. */
+                    ( void * ) 0,    /* Parameter passed into the task. */
+                    1 ,/* Priority at which the task is created. */
+                    &Load1Handler, /* Used to pass out the created task's handle. */
+										LOAD1_TASK_PERIOD);     /*Used t0 pass the period of the task*/
+										
+		xTaskPeriodicCreate(
+                    Load_2_Simulation,       /* Function that implements the task. */
+                    "Load_2_Simulation",          /* Text name for the task. */
+                    100,      /* Stack size in words, not bytes. */
+                    ( void * ) 0,    /* Parameter passed into the task. */
+                    1 ,/* Priority at which the task is created. */
+                    &Load2Handler, /* Used to pass out the created task's handle. */
+										LOAD2_TASK_PERIOD); /*Used t0 pass the period of the task*/
+			
+/*Creating the Queue */						
+		xMessageBuffer = xQueueCreate( 3, sizeof( unsigned char[15] ) );
 
 	/* Now all the tasks have been started - start the scheduler.
 
