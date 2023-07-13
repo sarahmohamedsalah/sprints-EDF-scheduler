@@ -163,7 +163,18 @@ void Button_2_Monitor_Task (void *pvParameters) {
     }
     vTaskDelayUntil(&currentTick, BUTTON_2_MONITOR_TASK_DELAY);
   }
-}
+  
+void Periodic_Transmitter_Task (void *pvParameters) {
+  TickType_t currentTick = 0;
+  currentTick = xTaskGetTickCount();
+  
+  vTaskSetApplicationTaskTag(NULL, (void *) PIN5);
+  
+  for ( ;; ) {
+    xQueueSend(xQueue, (void *)&Msg_3, ( TickType_t ) TICKS_TO_WAIT);
+    vTaskDelayUntil(&currentTick, PERIODIC_TASK_DELAY);
+  }
+}  
 
 /*
  * Application entry point:
