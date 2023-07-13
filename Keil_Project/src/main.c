@@ -169,6 +169,18 @@ void Load_2_Simulation( void * pvParameters )
 
 
 }
+void vApplicationTickHook(void)
+{
+	GPIO_write(PORT_1, PIN0, PIN_IS_HIGH);
+	GPIO_write(PORT_1, PIN0, PIN_IS_LOW);
+}
+
+
+void vApplicationIdleHook(void)
+{
+	vTaskSetApplicationTaskTag(NULL,(void *) 8); /*giving Tag to the task to use Trace Hooks */
+}
+
 
 /*
  * Configure the processor for use with the Keil demo board.  This is very
