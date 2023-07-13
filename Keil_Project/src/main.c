@@ -174,7 +174,27 @@ void Periodic_Transmitter_Task (void *pvParameters) {
     xQueueSend(xQueue, (void *)&Msg_3, ( TickType_t ) TICKS_TO_WAIT);
     vTaskDelayUntil(&currentTick, PERIODIC_TASK_DELAY);
   }
-}  
+} 
+
+void Uart_Receiver_Task (void *pvParameters) {
+  TickType_t currentTick = 0;
+  uint8_t xRxedString[ USR_STRING_LEN ];
+  currentTick = xTaskGetTickCount();
+  
+  vTaskSetApplicationTaskTag(NULL, (void *) PIN6);
+  
+  for ( ;; ) {
+    if( xQueue != NULL ) {
+      if( xQueueReceive( xQueue, &( xRxedString ), ( TickType_t ) TICKS_TO_WAIT ) == pdPASS ) {
+        /* xRxedStructure now contains a copy of xMessage. */
+        
+        /* Write on the terminal */
+        while ( vSerialPutString( (const signed char *) xRxedString, USR_STRING_LEN) == pdFALSE );
+      }
+    }
+    vTaskDelayUntil(&currentTick, UART_RECEIVER_TASK_DELAY);
+  }
+}
 
 /*
  * Application entry point:
