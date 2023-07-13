@@ -78,6 +78,7 @@ to exclude the API function. */
 #define INCLUDE_vTaskDelayUntil			1
 #define INCLUDE_vTaskDelay				1
 
-
+#define traceTASK_SWITCHED_IN() GPIO_write(PORT_0, (int)pxCurrentTCB->pxTaskTag, PIN_IS_HIGH);
+#define traceTASK_SWITCHED_OUT() GPIO_write(PORT_0, (int)pxCurrentTCB->pxTaskTag, PIN_IS_LOW);
 
 #endif /* FREERTOS_CONFIG_H */
