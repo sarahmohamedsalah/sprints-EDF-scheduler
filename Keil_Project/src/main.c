@@ -163,6 +163,7 @@ void Button_2_Monitor_Task (void *pvParameters) {
     }
     vTaskDelayUntil(&currentTick, BUTTON_2_MONITOR_TASK_DELAY);
   }
+}
   
 void Periodic_Transmitter_Task (void *pvParameters) {
   TickType_t currentTick = 0;
@@ -197,6 +198,12 @@ void Uart_Receiver_Task (void *pvParameters) {
 }
 
 /* ---------------------------- Task implementation ends here. ---------------------------- */
+
+void vApplicationTickHook(void) {
+  GPIO_write(PORT_0, PIN4, PIN_IS_HIGH);
+  GPIO_write(PORT_0, PIN4, PIN_IS_LOW);
+}
+
 
 /*
  * Application entry point:
