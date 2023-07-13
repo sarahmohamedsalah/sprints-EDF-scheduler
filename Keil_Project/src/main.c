@@ -86,6 +86,9 @@
 #define LOAD_1                      (37313)
 #define LOAD_2                      (89552)
 
+#define QUEUE_SIZE                  10
+#define QUEUE_MEMBER_SIZE           15
+
 /* Button 1 task handler */
 TaskHandle_t Button_1_Monitor_TASK_TaskHandler  = NULL;
 TaskHandle_t Button_2_Monitor_TASK_TaskHandler  = NULL;
@@ -220,7 +223,6 @@ void Load_1_Simulation( void *pvParameters ) {
 
 void Load_2_Simulation( void * pvParameters ) {
 	uint32_t count;
-//  TickType_t x = pdMS_TO_TICKS(12);
   TickType_t xLastWakeTime;
   xLastWakeTime = xTaskGetTickCount();
 	
@@ -254,11 +256,10 @@ int main( void )
   xSerialPortInitMinimal(mainCOM_TEST_BAUD_RATE);
   
   /* Create a queue capable of containing 10 15 bits values. */
-  xQueue = xQueueCreate( 10, 15 * sizeof( uint8_t ) );
+  xQueue = xQueueCreate( QUEUE_SIZE, QUEUE_MEMBER_SIZE * sizeof( uint8_t ) );
 	
-    /* Create Tasks here */
-
-
+   /* ------------------------------------------ Create Tasks here ------------------------------------------*/
+  
   /* Create Task 1 (Button 1 Monitor) */
   xTaskCreate(
   Button_1_Monitor_Task,
