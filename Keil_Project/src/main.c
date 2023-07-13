@@ -60,6 +60,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "lpc21xx.h"
+#include "semphr.h"
 
 /* Peripheral includes. */
 #include "serial.h"
@@ -74,6 +75,32 @@
 /* Constants for the ComTest demo application tasks. */
 #define mainCOM_TEST_BAUD_RATE	( ( unsigned long ) 115200 )
 
+#define BUTTON_1_MONITOR_TASK_DELAY 50
+#define BUTTON_2_MONITOR_TASK_DELAY 50
+#define PERIODIC_TASK_DELAY         100
+#define UART_RECEIVER_TASK_DELAY    20
+#define TICKS_TO_WAIT               10
+#define USR_STRING_LEN              15 
+
+/* Button 1 task handler */
+TaskHandle_t Button_1_Monitor_TASK_TaskHandler  = NULL;
+TaskHandle_t Button_2_Monitor_TASK_TaskHandler  = NULL;
+TaskHandle_t Uart_Receiver_TaskHandler          = NULL;
+TaskHandle_t Periodic_Transmitter_TaskHandler   = NULL;
+
+/* Queue handler */
+QueueHandle_t xQueue = NULL;
+
+/* Button 1 states */
+pinState_t g_Button_1_previousState = PIN_IS_HIGH;
+pinState_t g_Button_1_currentState  = PIN_IS_HIGH;
+
+pinState_t g_Button_2_previousState = PIN_IS_HIGH;
+pinState_t g_Button_2_currentState  = PIN_IS_HIGH;
+
+const uint8_t Msg_1[ USR_STRING_LEN ] = "PB 1 Pressed.\n";
+const uint8_t Msg_2[ USR_STRING_LEN ] = "PB 2 Pressed.\n";
+const uint8_t Msg_3[ USR_STRING_LEN ] = "Periodic str.\n";
 
 /*
  * Configure the processor for use with the Keil demo board.  This is very
@@ -83,6 +110,33 @@
 static void prvSetupHardware( void );
 /*-----------------------------------------------------------*/
 
+/* ---------------------------- Task implementation starts here. ---------------------------- */
+
+void Button_1_Monitor_Task (void *pvParameters) {
+  TickType_t currentTick = 0;
+  currentTick = xTaskGetTickCount();
+  
+  vTaskSetApplicationTaskTag(NULL, (void *) PIN2);
+  
+  for ( ;; ) {
+    g_Button_1_currentState = GPIO_read(PORT_0, PIN0);
+    /* If push button is pressed, take the semaphore if avialable. */
+    if (g_Button_1_previousState == PIN_IS_LOW && g_Button_1_currentState == PIN_IS_HIGH) {
+      g_Button_1_previousState = PIN_IS_HIGH;
+      /* Send the notificaton message to the queue. */
+      xQueueSend(xQueue, (void *)&Msg_1, ( TickType_t ) TICKS_TO_WAIT);
+    
+    } else if (g_Button_1_previousState == PIN_IS_HIGH && g_Button_1_currentState == PIN_IS_LOW) {
+      g_Button_1_previousState = PIN_IS_LOW;
+      /* Send the notification message to the queue. */
+      xQueueSend(xQueue, (void *)&Msg_1, ( TickType_t ) TICKS_TO_WAIT);
+    
+    } else {
+      /* Do nothing. */
+    }
+    vTaskDelayUntil(&currentTick, BUTTON_1_MONITOR_TASK_DELAY);
+  }
+}
 
 /*
  * Application entry point:
