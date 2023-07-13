@@ -138,6 +138,33 @@ void Button_1_Monitor_Task (void *pvParameters) {
   }
 }
 
+void Button_2_Monitor_Task (void *pvParameters) {
+  TickType_t currentTick = 0;
+  currentTick = xTaskGetTickCount();
+  
+  vTaskSetApplicationTaskTag(NULL, (void *) PIN3);
+  
+  for ( ;; ) {
+    g_Button_2_currentState = GPIO_read(PORT_0, PIN1);
+    
+    /* If push button is pressed, take the semaphore if avialable. */
+    if (g_Button_2_previousState == PIN_IS_LOW && g_Button_2_currentState == PIN_IS_HIGH) {
+      g_Button_2_previousState = PIN_IS_HIGH;
+      /* Send the notificaton message to the queue. */
+      xQueueSend(xQueue, (void *)&Msg_2, ( TickType_t ) TICKS_TO_WAIT);
+    
+    } else if (g_Button_2_previousState == PIN_IS_HIGH && g_Button_2_currentState == PIN_IS_LOW) {
+      g_Button_2_previousState = PIN_IS_LOW;
+      /* Send the notificaton message to the queue. */
+      xQueueSend(xQueue, (void *)&Msg_2, ( TickType_t ) TICKS_TO_WAIT);
+    
+    } else {    
+      /* Do nothing. */
+    }
+    vTaskDelayUntil(&currentTick, BUTTON_2_MONITOR_TASK_DELAY);
+  }
+}
+
 /*
  * Application entry point:
  * Starts all the other tasks, then starts the scheduler. 
