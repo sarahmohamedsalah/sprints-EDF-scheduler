@@ -1235,10 +1235,17 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB )
 			so far. */
 			if( xSchedulerRunning == pdFALSE )
 			{
-				if( pxCurrentTCB->uxPriority <= pxNewTCB->uxPriority )
-				{
-					pxCurrentTCB = pxNewTCB;
-				}
+                #if (configUSE_EDF_SCHEDULER == 1 )
+                    if( pxCurrentTCB->xTaskPeriod >= pxNewTCB->xTaskPeriod )
+                    {
+                        pxCurrentTCB = pxNewTCB;
+                    }
+                #else
+                    if( pxCurrentTCB->uxPriority <= pxNewTCB->uxPriority )
+                    {
+                        pxCurrentTCB = pxNewTCB;
+                    }
+                #endif
 				else
 				{
 					mtCOVERAGE_TEST_MARKER();
