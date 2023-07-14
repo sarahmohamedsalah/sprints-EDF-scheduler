@@ -2936,8 +2936,15 @@ BaseType_t xSwitchRequired = pdFALSE;
 						mtCOVERAGE_TEST_MARKER();
 					}
 
-					/* Place the unblocked task into the appropriate ready
-					list. */
+#if ( configUSE_EDF_SCHEDULER == 1 )
+                    // h_edf_10. calculate new deadline then add task to EDF Ready list
+                    listSET_LIST_ITEM_VALUE(&((pxTCB)->xStateListItem) , ((TickType_t)(((pxTCB)->xTaskPeriod) + xTickCount)) );
+                    // also updates idle task deadline
+                    listSET_LIST_ITEM_VALUE( &( ( xIdleTaskHandle )->xStateListItem ), ( xIdleTaskHandle)->xTaskPeriod + xTickCount);
+#endif
+
+                    /* Place the unblocked task into the appropriate ready
+                    list. */
 					prvAddTaskToReadyList( pxTCB );
 
 #if( configUSE_EDF_SCHEDULER == 1 )
@@ -2945,8 +2952,8 @@ BaseType_t xSwitchRequired = pdFALSE;
                     xSwitchRequired = pdTRUE;
 #endif
 
-					/* A task being unblocked cannot cause an immediate
-					context switch if preemption is turned off. */
+                    /* A task being unblocked cannot cause an immediate
+                    context switch if preemption is turned off. */
 					#if (  configUSE_PREEMPTION == 1 )
 					{
 						/* Preemption is on, but a context switch should
