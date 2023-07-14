@@ -2940,6 +2940,11 @@ BaseType_t xSwitchRequired = pdFALSE;
 					list. */
 					prvAddTaskToReadyList( pxTCB );
 
+#if( configUSE_EDF_SCHEDULER == 1 )
+                    // h_edf_11. always switch context to meet EDF criteria
+                    xSwitchRequired = pdTRUE;
+#endif
+
 					/* A task being unblocked cannot cause an immediate
 					context switch if preemption is turned off. */
 					#if (  configUSE_PREEMPTION == 1 )
