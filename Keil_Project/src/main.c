@@ -65,6 +65,12 @@
 #include "serial.h"
 #include "GPIO.h"
 
+void TSK_A (void *pvParameters);
+void TSK_B (void *pvParameters);
+
+/* Optional Statistics */
+#define APP_STATS_BUFFER_SIZE 150
+char runTimeStatsBuff [APP_STATS_BUFFER_SIZE];
 
 /*-----------------------------------------------------------*/
 
@@ -74,6 +80,9 @@
 /* Constants for the ComTest demo application tasks. */
 #define mainCOM_TEST_BAUD_RATE	( ( unsigned long ) 115200 )
 
+#define CAPACITY 2 // cpu time in ticks
+#define A_PERIOD 5 // task A period
+#define B_PERIOD 8 // task B period
 
 /*
  * Configure the processor for use with the Keil demo board.  This is very
@@ -95,6 +104,23 @@ int main( void )
 
 	
     /* Create Tasks here */
+    xTaskPeriodicCreate(TSK_A,
+                        "A",
+                        configMINIMAL_STACK_SIZE,
+                        NULL,
+                        1,
+                        NULL,
+                        A_PERIOD
+    );
+
+    xTaskPeriodicCreate(TSK_B,
+                        "B",
+                        configMINIMAL_STACK_SIZE,
+                        NULL,
+                        1,
+                        NULL,
+                        B_PERIOD
+    );
 
 
 	/* Now all the tasks have been started - start the scheduler.
@@ -106,10 +132,87 @@ int main( void )
 	these demo application projects then ensure Supervisor mode is used here. */
 	vTaskStartScheduler();
 
+
+
 	/* Should never reach here!  If you do then there was not enough heap
 	available for the idle task to be created. */
 	for( ;; );
 }
+
+/*-----------------------------------------------------------*/
+
+void TSK_A (void * pvParameters)
+{
+    TickType_t xLastWakeTimeA;
+    const TickType_t xFrequency = A_PERIOD;
+    volatile int count = CAPACITY;
+
+    xLastWakeTimeA = 0;
+	GPIO_write(PORT_0, PIN2, PIN_IS_HIGH);
+    vTaskSetApplicationTaskTag(NULL, (void *) PIN2);
+
+    while (1)
+    {
+        TickType_t xTime = xTaskGetTickCount();
+
+        TickType_t x;
+        while (count != 0)
+        {
+            if((x = xTaskGetTickCount()) > xTime)
+            {
+                xTime = x;
+                count--;
+            }
+        }
+
+        count = CAPACITY;
+
+        vTaskGetRunTimeStats(runTimeStatsBuff);
+
+        xSerialPutChar('\n');
+        vSerialPutString(runTimeStatsBuff,APP_STATS_BUFFER_SIZE);
+        xSerialPutChar('\n');
+
+
+        vTaskDelayUntil(&xLastWakeTimeA, xFrequency);
+
+    }
+
+}
+
+void TSK_B (void * pvParameters)
+{
+    TickType_t xLastWakeTimeB;
+    const TickType_t xFrequency = B_PERIOD;
+    volatile int count = CAPACITY;
+		GPIO_write(PORT_0, PIN3, PIN_IS_HIGH);
+    vTaskSetApplicationTaskTag(NULL, (void *) PIN3);
+
+    xLastWakeTimeB = 0;
+
+    while (1)
+    {
+        TickType_t xTime = xTaskGetTickCount();
+
+        TickType_t x;
+        while (count != 0)
+        {
+            if((x = xTaskGetTickCount()) > xTime)
+            {
+                xTime = x;
+                count--;
+            }
+        }
+
+        count = CAPACITY;
+
+        vTaskDelayUntil(&xLastWakeTimeB, xFrequency);
+
+    }
+
+}
+
+
 /*-----------------------------------------------------------*/
 
 /* Function to reset timer 1 */
@@ -144,5 +247,19 @@ static void prvSetupHardware( void )
 	VPBDIV = mainBUS_CLK_FULL;
 }
 /*-----------------------------------------------------------*/
+void vApplicationIdleHook()
+{
+	static char tagInit = 0;
+	if( tagInit == 0 )
+	{
+		GPIO_write(PORT_0, PIN0, PIN_IS_HIGH);
+		vTaskSetApplicationTaskTag(NULL, (void *) PIN0);
+		tagInit = 1;
+	}
+}
 
-
+void vApplicationTickHook()
+{
+	GPIO_write(PORT_0, PIN1, PIN_IS_HIGH);
+	GPIO_write(PORT_0, PIN1, PIN_IS_LOW);
+}
