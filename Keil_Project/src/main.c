@@ -261,58 +261,64 @@ int main( void )
    /* ------------------------------------------ Create Tasks here ------------------------------------------*/
   
   /* Create Task 1 (Button 1 Monitor) */
-  xTaskCreate(
+  xTaskCreatePeriodic(
   Button_1_Monitor_Task,
 	"Button 1 monitor task",
 	configMINIMAL_STACK_SIZE,
 	NULL,
 	1,
-	&Button_1_Monitor_TASK_TaskHandler);
+	&Button_1_Monitor_TASK_TaskHandler,
+	BUTTON_1_MONITOR_TASK_DELAY);
   
   /* Create Task 2 (Button 2 Monitor) */
-  xTaskCreate(
+  xTaskCreatePeriodic(
 	Button_2_Monitor_Task,
 	"Button 2 monitor task",
 	configMINIMAL_STACK_SIZE,
 	NULL,
 	1,
-	&Button_2_Monitor_TASK_TaskHandler);
+	&Button_2_Monitor_TASK_TaskHandler,
+	BUTTON_2_MONITOR_TASK_DELAY);
 
   /* Create the periodic task */
-  xTaskCreate(
+  xTaskCreatePeriodic(
 	Periodic_Transmitter_Task,
 	"Peridic task",
 	configMINIMAL_STACK_SIZE,
 	NULL,
 	1,
-	&Periodic_Transmitter_TaskHandler);
+	&Periodic_Transmitter_TaskHandler,
+	PERIODIC_TASK_DELAY);
 
   /* Create the consumer task (UART recieve) */
-  xTaskCreate(
+  xTaskCreatePeriodic(
 	Uart_Receiver_Task,
 	"Consumer task",
 	configMINIMAL_STACK_SIZE,
 	NULL,
 	1,
-	&Uart_Receiver_TaskHandler);
+	&Uart_Receiver_TaskHandler, 
+	UART_RECEIVER_TASK_DELAY);
   
   /* Create the load simulation task (Load 1 simulation) */
-  xTaskCreate(
+  xTaskCreatePeriodic(
 	Load_1_Simulation,
 	"Load 1 simulation",
 	configMINIMAL_STACK_SIZE,
 	NULL,
 	1,
-	&Load_1_Simulation_TaskHandler);
+	&Load_1_Simulation_TaskHandler,
+	LOAD_1_SIMULATION_DELAY);
 
   /* Create the load simulation task (Load 2 simulation) */
-  xTaskCreate(
+  xTaskCreatePeriodic(
 	Load_2_Simulation,
 	"Load 2 simulation",
 	configMINIMAL_STACK_SIZE,
 	NULL,
 	1,
-	&Load_2_Simulation_TaskHandler);  
+	&Load_2_Simulation_TaskHandler,
+	LOAD_2_SIMULATION_DELAY);  
 
 
 
