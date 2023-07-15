@@ -101,14 +101,16 @@ TaskHandle_t Load_2_Simulation_TaskHandler      = NULL;
 QueueHandle_t xQueue = NULL;
 
 /* Button 1 states */
-pinState_t g_Button_1_previousState = PIN_IS_HIGH;
-pinState_t g_Button_1_currentState  = PIN_IS_HIGH;
+pinState_t g_Button_1_previousState = PIN_IS_LOW;
+pinState_t g_Button_1_currentState  = PIN_IS_LOW;
 
-pinState_t g_Button_2_previousState = PIN_IS_HIGH;
-pinState_t g_Button_2_currentState  = PIN_IS_HIGH;
+pinState_t g_Button_2_previousState = PIN_IS_LOW;
+pinState_t g_Button_2_currentState  = PIN_IS_LOW;
 
-const uint8_t Msg_1[ USR_STRING_LEN ] = "PB 1 Pressed.\n";
-const uint8_t Msg_2[ USR_STRING_LEN ] = "PB 2 Pressed.\n";
+const uint8_t Btn_1_Msg_1[ USR_STRING_LEN ] = "PB 1 Pressed.\n";
+const uint8_t Btn_1_Msg_2[ USR_STRING_LEN ] = "PB 1 Release.\n";
+const uint8_t Btn_2_Msg_1[ USR_STRING_LEN ] = "PB 2 Pressed.\n";
+const uint8_t Btn_2_Msg_2[ USR_STRING_LEN ] = "PB 2 Release.\n";
 const uint8_t Msg_3[ USR_STRING_LEN ] = "Periodic str.\n";
 
 /*
@@ -133,12 +135,12 @@ void Button_1_Monitor_Task (void *pvParameters) {
     if (g_Button_1_previousState == PIN_IS_LOW && g_Button_1_currentState == PIN_IS_HIGH) {
       g_Button_1_previousState = PIN_IS_HIGH;
       /* Send the notificaton message to the queue. */
-      xQueueSend(xQueue, (void *)&Msg_1, ( TickType_t ) TICKS_TO_WAIT);
+      xQueueSend(xQueue, (void *)&Btn_1_Msg_1, ( TickType_t ) TICKS_TO_WAIT);
     
     } else if (g_Button_1_previousState == PIN_IS_HIGH && g_Button_1_currentState == PIN_IS_LOW) {
       g_Button_1_previousState = PIN_IS_LOW;
       /* Send the notification message to the queue. */
-      xQueueSend(xQueue, (void *)&Msg_1, ( TickType_t ) TICKS_TO_WAIT);
+      xQueueSend(xQueue, (void *)&Btn_1_Msg_2, ( TickType_t ) TICKS_TO_WAIT);
     
     } else {
       /* Do nothing. */
@@ -160,12 +162,12 @@ void Button_2_Monitor_Task (void *pvParameters) {
     if (g_Button_2_previousState == PIN_IS_LOW && g_Button_2_currentState == PIN_IS_HIGH) {
       g_Button_2_previousState = PIN_IS_HIGH;
       /* Send the notificaton message to the queue. */
-      xQueueSend(xQueue, (void *)&Msg_2, ( TickType_t ) TICKS_TO_WAIT);
+      xQueueSend(xQueue, (void *)&Btn_2_Msg_1, ( TickType_t ) TICKS_TO_WAIT);
     
     } else if (g_Button_2_previousState == PIN_IS_HIGH && g_Button_2_currentState == PIN_IS_LOW) {
       g_Button_2_previousState = PIN_IS_LOW;
       /* Send the notificaton message to the queue. */
-      xQueueSend(xQueue, (void *)&Msg_2, ( TickType_t ) TICKS_TO_WAIT);
+      xQueueSend(xQueue, (void *)&Btn_2_Msg_2, ( TickType_t ) TICKS_TO_WAIT);
     
     } else {    
       /* Do nothing. */
@@ -242,6 +244,16 @@ void vApplicationTickHook(void) {
   GPIO_write(PORT_0, PIN4, PIN_IS_LOW);
 }
 
+void vApplicationIdleHook()
+{
+	static char tagInit = 0;
+	if( tagInit == 0 )
+	{
+		GPIO_write(PORT_0, PIN9, PIN_IS_HIGH);
+		vTaskSetApplicationTaskTag(NULL, (void *) PIN9);
+		tagInit = 1;
+	}
+}
 
 /*
  * Application entry point:
