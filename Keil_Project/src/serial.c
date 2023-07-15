@@ -80,7 +80,7 @@
 unsigned char receivedChar;
 unsigned char isNewCharAvailable = 0;
 
-unsigned char txBuffer[200];
+unsigned char txBuffer[250];
 unsigned char txDataSizeToSend;
 unsigned char txDataSizeLeftToSend;
 /*

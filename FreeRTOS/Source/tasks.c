@@ -813,6 +813,7 @@ BaseType_t xTaskPeriodicCreate( TaskFunction_t pxTaskCode,
                 /* Store the stack location in the TCB. */
                 pxNewTCB->pxStack = pxStack;
 
+							#if configUSE_EDF_SCHEDULER
                 // h_edf_6. initialize the new task period parameter
                 pxNewTCB->xTaskPeriod = taskPeriod;
 
@@ -821,7 +822,8 @@ BaseType_t xTaskPeriodicCreate( TaskFunction_t pxTaskCode,
                 currentTick = xTaskGetTickCount();
                 // set list item value with new deadline
                 listSET_LIST_ITEM_VALUE(&((pxNewTCB)->xStateListItem) , ((TickType_t)(((pxNewTCB)->xTaskPeriod) + currentTick)) );
-            }
+							#endif
+							}
             else
             {
                 /* The stack cannot be used as the TCB was not created.  Free
@@ -3802,8 +3804,10 @@ static void prvInitialiseTaskLists( void )
     vListInitialise( &xDelayedTaskList1 );
     vListInitialise( &xDelayedTaskList2 );
     vListInitialise( &xPendingReadyList );
+#if configUSE_EDF_SCHEDULER
     vListInitialise( &xReadyTasksListEDF ); // h_edf_2. init EDF list
-
+#endif
+		
 #if ( INCLUDE_vTaskDelete == 1 )
     {
         vListInitialise( &xTasksWaitingTermination );
