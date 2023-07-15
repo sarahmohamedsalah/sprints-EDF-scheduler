@@ -113,9 +113,9 @@ configIDLE_TASK_NAME in FreeRTOSConfig.h. */
 #endif
 
 /* The period allocated to the Idle task in case of using EDF scheduler.
-This can be overridden by defining configIDLE_TASK_NAME in FreeRTOSConfig.h. */
+This can be overridden by defining configIDLE_TASK_PERIOD in FreeRTOSConfig.h. */
 #ifndef configIDLE_TASK_PERIOD
-	#define configIDLE_TASK_PERIOD 100
+	#define configIDLE_TASK_PERIOD 200
 #endif
 
 #if ( configUSE_PORT_OPTIMISED_TASK_SELECTION == 0 )
@@ -2146,8 +2146,8 @@ BaseType_t xReturn;
 									  configIDLE_TASK_NAME,
 									  configMINIMAL_STACK_SIZE, 
 									  (void*)NULL, 
-									  (tskIDLE_PRIORITY | portPRIVILEGE_BIT), 
-									  NULL,
+									  portPRIVILEGE_BIT, 
+									  &xIdleTaskHandle,
 									  initIDLEPeriod);
 	}
 	#else
