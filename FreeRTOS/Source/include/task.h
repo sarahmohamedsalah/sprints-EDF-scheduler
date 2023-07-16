@@ -327,12 +327,22 @@ is used in assert() statements. */
  * \ingroup Tasks
  */
 #if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
-	BaseType_t xTaskCreate(	TaskFunction_t pxTaskCode,
-							const char * const pcName,	/*lint !e971 Unqualified char types are allowed for strings and single characters only. */
-							const configSTACK_DEPTH_TYPE usStackDepth,
-							void * const pvParameters,
-							UBaseType_t uxPriority,
-							TaskHandle_t * const pxCreatedTask ) PRIVILEGED_FUNCTION;
+	#if ( configUSE_EDF_SCHEDULER == 0 )
+		BaseType_t xTaskCreate(	TaskFunction_t pxTaskCode,
+								const char * const pcName,	/*lint !e971 Unqualified char types are allowed for strings and single characters only. */
+								const configSTACK_DEPTH_TYPE usStackDepth,
+								void * const pvParameters,
+								UBaseType_t uxPriority,
+								TaskHandle_t * const pxCreatedTask ) PRIVILEGED_FUNCTION;
+	#else							
+		BaseType_t xTaskCreatePeriodic(	TaskFunction_t pxTaskCode,
+									const char * const pcName,		/*lint !e971 Unqualified char types are allowed for strings and single characters only. */
+									const configSTACK_DEPTH_TYPE usStackDepth,
+									void * const pvParameters,
+									UBaseType_t uxPriority,
+									TaskHandle_t * const pxCreatedTask,
+									TickType_t period );
+	#endif
 #endif
 
 /**

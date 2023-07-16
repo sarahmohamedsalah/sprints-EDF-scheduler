@@ -5,13 +5,13 @@
 
 PinConfig_t PinConfig_array[] = 
 							{
-								{PORT_0, PIN0, INPUT},
-								{PORT_0, PIN1, OUTPUT},
-								{PORT_0, PIN2, OUTPUT},
-								{PORT_0, PIN3, OUTPUT},
-								{PORT_0, PIN4, OUTPUT},
-								{PORT_0, PIN5, OUTPUT},
-								{PORT_0, PIN6, OUTPUT},
+								{PORT_0, PIN0, INPUT}, /* Button 1 Input */
+								{PORT_0, PIN1, INPUT}, /* Button 2 Input */
+								{PORT_0, PIN2, OUTPUT}, /* Button 1 Hook output */
+								{PORT_0, PIN3, OUTPUT}, /* Button 2 Hook output */
+								{PORT_0, PIN4, OUTPUT}, /* Tick Hook output */
+								{PORT_0, PIN5, OUTPUT}, /* Periodic task Hoot output */
+								{PORT_0, PIN6, OUTPUT}, /* Uart task */
 								{PORT_0, PIN7, OUTPUT},
 								{PORT_0, PIN8, OUTPUT},
 								{PORT_0, PIN9, OUTPUT},

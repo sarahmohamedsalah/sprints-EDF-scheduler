@@ -60,6 +60,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "lpc21xx.h"
+#include "semphr.h"
 
 /* Peripheral includes. */
 #include "serial.h"
@@ -74,7 +75,56 @@
 /* Constants for the ComTest demo application tasks. */
 #define mainCOM_TEST_BAUD_RATE	( ( unsigned long ) 115200 )
 
+#define BUTTON_1_MONITOR_TASK_DELAY 50
+#define BUTTON_2_MONITOR_TASK_DELAY 50
+#define PERIODIC_TASK_DELAY         100
+#define UART_RECEIVER_TASK_DELAY    20
+#define LOAD_1_SIMULATION_DELAY     10
+#define LOAD_2_SIMULATION_DELAY     100
+#define TICKS_TO_WAIT               20
+#define USR_STRING_LEN              15 
+#define LOAD_1                      (37313)
+#define LOAD_2                      (89552)
 
+#define QUEUE_SIZE                  10
+#define QUEUE_MEMBER_SIZE           15
+#define APP_STATS_BUFFER_SIZE				240
+
+
+TaskHandle_t Button_1_Monitor_TASK_TaskHandler  = NULL;
+TaskHandle_t Button_2_Monitor_TASK_TaskHandler  = NULL;
+TaskHandle_t Uart_Receiver_TaskHandler          = NULL;
+TaskHandle_t Periodic_Transmitter_TaskHandler   = NULL;
+TaskHandle_t Load_1_Simulation_TaskHandler      = NULL;
+TaskHandle_t Load_2_Simulation_TaskHandler      = NULL;
+
+/* Queue handler */
+QueueHandle_t xQueue = NULL;
+
+/* Button 1 states */
+pinState_t g_Button_1_previousState = PIN_IS_HIGH;
+pinState_t g_Button_1_currentState  = PIN_IS_HIGH;
+
+pinState_t g_Button_2_previousState = PIN_IS_HIGH;
+pinState_t g_Button_2_currentState  = PIN_IS_HIGH;
+
+const uint8_t Btn_1_Msg_1[ USR_STRING_LEN ] = "PB 1 Pressed.\n";
+const uint8_t Btn_1_Msg_2[ USR_STRING_LEN ] = "PB 1 Release.\n";
+const uint8_t Btn_2_Msg_1[ USR_STRING_LEN ] = "PB 2 Pressed.\n";
+const uint8_t Btn_2_Msg_2[ USR_STRING_LEN ] = "PB 2 Release.\n";
+const uint8_t Msg_3[ USR_STRING_LEN ] = "Periodic str.\n";
+
+
+unsigned int g_u32_button_1_in_time = 0, 							g_u32_button_1_out_time = 0,							g_u32_button_1_total_time;
+unsigned int g_u32_button_2_in_time = 0, 							g_u32_button_2_out_time = 0,							g_u32_button_2_total_time;
+unsigned int g_u32_load_1_in_time = 0, 								g_u32_load_1_out_time = 0,								g_u32_load_1_total_time;
+unsigned int g_u32_load_2_in_time = 0, 								g_u32_load_2_out_time = 0,								g_u32_load_2_total_time;
+unsigned int g_u32_periodic_transmitter_in_time = 0, 	g_u32_periodic_transmitter_out_time = 0,	g_u32_periodic_transmitter_total_time;
+unsigned int g_u32_uart_receiver_in_time = 0, 				g_u32_uart_receiver_out_time = 0, 				g_u32_uart_receiver_total_time;
+unsigned int g_u32_system_time;
+unsigned int g_u32_cpu_load;
+
+unsigned char g_arr_u8_runtime_stats_buff [APP_STATS_BUFFER_SIZE];
 /*
  * Configure the processor for use with the Keil demo board.  This is very
  * minimal as most of the setup is managed by the settings in the project
@@ -82,6 +132,170 @@
  */
 static void prvSetupHardware( void );
 /*-----------------------------------------------------------*/
+
+/* ---------------------------- Task implementation starts here. ---------------------------- */
+
+void Button_1_Monitor_Task (void *pvParameters) {
+  TickType_t currentTick = 0;
+  currentTick = xTaskGetTickCount();
+  
+  vTaskSetApplicationTaskTag(NULL, (void *) PIN2);
+  
+  for ( ;; ) 
+	{
+    g_Button_1_currentState = GPIO_read(PORT_0, PIN0);
+    
+		/* If push button is pressed, take the semaphore if avialable. */
+    if (g_Button_1_previousState == PIN_IS_LOW && g_Button_1_currentState == PIN_IS_HIGH) 
+		{
+      g_Button_1_previousState = PIN_IS_HIGH;
+      /* Send the notificaton message to the queue. */
+      xQueueSend(xQueue, (void *)&Btn_1_Msg_1, ( TickType_t ) TICKS_TO_WAIT);
+    } 
+		else if (g_Button_1_previousState == PIN_IS_HIGH && g_Button_1_currentState == PIN_IS_LOW) 
+		{
+      g_Button_1_previousState = PIN_IS_LOW;
+      /* Send the notification message to the queue. */
+      xQueueSend(xQueue, (void *)&Btn_1_Msg_2, ( TickType_t ) TICKS_TO_WAIT);
+    
+    } 
+		else 
+		{
+      /* Do nothing. */
+    }
+    vTaskDelayUntil(&currentTick, BUTTON_1_MONITOR_TASK_DELAY);
+		GPIO_write(PORT_0, PIN9, PIN_IS_LOW);
+  }
+}
+
+void Button_2_Monitor_Task (void *pvParameters) {
+  TickType_t currentTick = 0;
+  currentTick = xTaskGetTickCount();
+  
+  vTaskSetApplicationTaskTag(NULL, (void *) PIN3);
+  
+  for ( ;; ) 
+	{
+    g_Button_2_currentState = GPIO_read(PORT_0, PIN1);
+    
+    /* If push button is pressed, take the semaphore if avialable. */
+    if (g_Button_2_previousState == PIN_IS_LOW && g_Button_2_currentState == PIN_IS_HIGH)
+		{
+      g_Button_2_previousState = PIN_IS_HIGH;
+      /* Send the notificaton message to the queue. */
+      xQueueSend(xQueue, (void *)&Btn_2_Msg_1, ( TickType_t ) TICKS_TO_WAIT);
+    
+    } 
+		else if (g_Button_2_previousState == PIN_IS_HIGH && g_Button_2_currentState == PIN_IS_LOW) 
+		{
+      g_Button_2_previousState = PIN_IS_LOW;
+      /* Send the notificaton message to the queue. */
+      xQueueSend(xQueue, (void *)&Btn_2_Msg_2, ( TickType_t ) TICKS_TO_WAIT);
+    
+    } 
+		else 
+		{    
+      /* Do nothing. */
+    }
+    vTaskDelayUntil(&currentTick, BUTTON_2_MONITOR_TASK_DELAY);
+		GPIO_write(PORT_0, PIN9, PIN_IS_LOW);
+  }
+}
+  
+void Periodic_Transmitter_Task (void *pvParameters) {
+  TickType_t currentTick = 0;
+  currentTick = xTaskGetTickCount();
+  
+  vTaskSetApplicationTaskTag(NULL, (void *) PIN5);
+  
+  for ( ;; ) 
+	{
+    xQueueSend(xQueue, (void *)&Msg_3, ( TickType_t ) TICKS_TO_WAIT);
+    vTaskDelayUntil(&currentTick, PERIODIC_TASK_DELAY);
+		GPIO_write(PORT_0, PIN9, PIN_IS_LOW);
+  }
+} 
+
+void Uart_Receiver_Task (void *pvParameters) {
+  TickType_t currentTick = 0;
+  uint8_t xRxedString[ USR_STRING_LEN ];
+  currentTick = xTaskGetTickCount();
+  
+  vTaskSetApplicationTaskTag(NULL, (void *) PIN6);
+  
+  for ( ;; ) 
+	{
+    if( xQueue != NULL ) 
+		{
+      if( xQueueReceive( xQueue, &( xRxedString ), ( TickType_t ) TICKS_TO_WAIT ) == pdPASS ) {
+        /* xRxedStructure now contains a copy of xMessage. */
+        
+        /* Write on the terminal */
+        while ( vSerialPutString( (const signed char *) xRxedString, USR_STRING_LEN) == pdFALSE );
+      }
+    }
+		
+		//vTaskGetRunTimeStats(g_arr_u8_runtime_stats_buff);
+		//
+		//xSerialPutChar('\n');
+		//
+		//vSerialPutString(g_arr_u8_runtime_stats_buff,APP_STATS_BUFFER_SIZE);
+
+
+		vTaskDelayUntil(&currentTick, UART_RECEIVER_TASK_DELAY);
+		
+		GPIO_write(PORT_0, PIN9, PIN_IS_LOW);
+  }
+}
+
+void Load_1_Simulation( void *pvParameters ) {
+  int count;
+  TickType_t xLastWakeTime;
+  xLastWakeTime = xTaskGetTickCount();
+	
+	vTaskSetApplicationTaskTag(NULL, (void *) PIN7);
+  
+  for( ;; ) {	
+    for ( count = 0; count < LOAD_1; count++ ) {
+      /* for loop to make the excutions time 5ms*/
+    }
+    vTaskDelayUntil(&xLastWakeTime, LOAD_1_SIMULATION_DELAY);
+		GPIO_write(PORT_0, PIN9, PIN_IS_LOW);
+  } 
+}
+
+void Load_2_Simulation( void * pvParameters ) {
+  int count;
+  TickType_t xLastWakeTime;
+  xLastWakeTime = xTaskGetTickCount();
+	
+	vTaskSetApplicationTaskTag(NULL,(void *) PIN8);
+    for( ;; ) {
+      for ( count = 0; count < LOAD_2; count++) {
+        /* for loop to make the excutions time 12ms*/
+      }
+      vTaskDelayUntil(&xLastWakeTime, LOAD_2_SIMULATION_DELAY);
+			GPIO_write(PORT_0, PIN9, PIN_IS_LOW);
+    } 
+}
+
+/* ---------------------------- Task implementation ends here. ---------------------------- */
+
+void vApplicationTickHook(void) {
+  GPIO_write(PORT_0, PIN4, PIN_IS_HIGH);
+  GPIO_write(PORT_0, PIN4, PIN_IS_LOW);
+}
+
+void vApplicationIdleHook()
+{
+	static char tagInit = 0;
+	if( tagInit == 0 )
+	{
+		GPIO_write(PORT_0, PIN0, PIN_IS_HIGH);
+		vTaskSetApplicationTaskTag(NULL, (void *) PIN9);
+		tagInit = 1;
+	}
+}
 
 
 /*
@@ -92,12 +306,132 @@ int main( void )
 {
 	/* Setup the hardware for use with the Keil demo board. */
 	prvSetupHardware();
-
+  
+  /* Initialize UART */
+  xSerialPortInitMinimal(mainCOM_TEST_BAUD_RATE);
+  
+  /* Create a queue capable of containing 10 15 bits values. */
+  xQueue = xQueueCreate( QUEUE_SIZE, QUEUE_MEMBER_SIZE * sizeof( uint8_t ) );
 	
-    /* Create Tasks here */
+   /* ------------------------------------------ Create Tasks here ------------------------------------------*/
+  
+  /* Create Task 1 (Button 1 Monitor) */
+  xTaskCreatePeriodic(
+  Button_1_Monitor_Task,
+	"Button 1",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Button_1_Monitor_TASK_TaskHandler,
+	BUTTON_1_MONITOR_TASK_DELAY);
+  
+  /* Create Task 2 (Button 2 Monitor) */
+  xTaskCreatePeriodic(
+	Button_2_Monitor_Task,
+	"Button 2",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Button_2_Monitor_TASK_TaskHandler,
+	BUTTON_2_MONITOR_TASK_DELAY);
+
+  /* Create the periodic task */
+  xTaskCreatePeriodic(
+	Periodic_Transmitter_Task,
+	"Periodic",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Periodic_Transmitter_TaskHandler,
+	PERIODIC_TASK_DELAY);
+
+  /* Create the consumer task (UART recieve) */
+  xTaskCreatePeriodic(
+	Uart_Receiver_Task,
+	"Uart",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Uart_Receiver_TaskHandler, 
+	UART_RECEIVER_TASK_DELAY);
+  
+  /* Create the load simulation task (Load 1 simulation) */
+  xTaskCreatePeriodic(
+	Load_1_Simulation,
+	"Load 1",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Load_1_Simulation_TaskHandler,
+	LOAD_1_SIMULATION_DELAY);
+
+  /* Create the load simulation task (Load 2 simulation) */
+  xTaskCreatePeriodic(
+	Load_2_Simulation,
+	"Load 2",
+	configMINIMAL_STACK_SIZE,
+	NULL,
+	1,
+	&Load_2_Simulation_TaskHandler,
+	LOAD_2_SIMULATION_DELAY);  
 
 
-	/* Now all the tasks have been started - start the scheduler.
+
+/*---------------------------------*/
+// xTaskCreate(
+//  Button_1_Monitor_Task,
+// "Button 1",
+// configMINIMAL_STACK_SIZE,
+// NULL,
+// 1,
+// &Button_1_Monitor_TASK_TaskHandler);
+//  
+//  /* Create Task 2 (Button 2 Monitor) */
+//  xTaskCreate(
+// Button_2_Monitor_Task,
+// "Button 2",
+// configMINIMAL_STACK_SIZE,
+// NULL,
+// 1,
+// &Button_2_Monitor_TASK_TaskHandler);
+// 
+//  /* Create the periodic task */
+//  xTaskCreate(
+// Periodic_Transmitter_Task,
+// "Periodic",
+// configMINIMAL_STACK_SIZE,
+// NULL,
+// 1,
+// &Periodic_Transmitter_TaskHandler);
+// 
+//  /* Create the consumer task (UART recieve) */
+//  xTaskCreate(
+// Uart_Receiver_Task,
+// "UART",
+// configMINIMAL_STACK_SIZE,
+// NULL,
+// 1,
+// &Uart_Receiver_TaskHandler);
+//  
+//  /* Create the load simulation task (Load 1 simulation) */
+//  xTaskCreate(
+// Load_1_Simulation,
+// "Load 1",
+// configMINIMAL_STACK_SIZE,
+// NULL,
+// 1,
+// &Load_1_Simulation_TaskHandler);
+// 
+//  /* Create the load simulation task (Load 2 simulation) */
+//  xTaskCreate(
+// Load_2_Simulation,
+// "Load 2",
+// configMINIMAL_STACK_SIZE,
+// NULL,
+// 1,
+// &Load_2_Simulation_TaskHandler);  
+
+/* Now all the tasks have been started - start the scheduler.
 
 	NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
 	The processor MUST be in supervisor mode when vTaskStartScheduler is 
