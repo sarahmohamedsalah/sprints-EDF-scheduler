@@ -1,4 +1,4 @@
-# Obstacle Avoidance Car
+# EDF Scheduler
 #### Embedded SW Design
 #### Author: Team 1
 - #### Members:
